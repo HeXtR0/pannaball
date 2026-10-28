@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ballgame</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="hud" class="hidden">
+    <div class="team orange">
+      <span class="name" data-i18n="teamOrange">ORANGE</span>
+      <span class="score" id="score-orange">0</span>
+    </div>
+    <div class="sep">:</div>
+    <div class="team purple">
+      <span class="score" id="score-purple">0</span>
+      <span class="name" data-i18n="teamPurple">PURPLE</span>
+    </div>
+  </div>
+  <div id="clock" class="hidden">3:00</div>
+
+  <div id="toast"></div>
+
+  <div id="help" class="hidden" data-i18n="help"></div>
+
+  <div id="menu">
+    <h1 class="logo"><span class="o">BALL</span><span class="p">GAME</span></h1>
+    <p class="sub" data-i18n="chooseMode">Choose a mode</p>
+    <div class="cards">
+      <button class="card" data-mode="1v1">
+        <div class="mini"><i class="mid"></i><i class="circle"></i></div>
+        <div class="label">1v1</div>
+        <div class="desc" data-i18n="desc1v1"></div>
+        <kbd>1</kbd>
+      </button>
+      <button class="card" data-mode="2v2">
+        <div class="mini"><i class="mid"></i><i class="circle"></i></div>
+        <div class="label">2v2</div>
+        <div class="desc" data-i18n="desc2v2"></div>
+        <kbd>2</kbd>
+      </button>
+      <button class="card" data-mode="3v3">
+        <div class="mini"><i class="mid"></i><i class="circle"></i></div>
+        <div class="label">3v3</div>
+        <div class="desc" data-i18n="desc3v3"></div>
+        <kbd>3</kbd>
+      </button>
+    </div>
+
+    <div class="settings">
+      <div class="row">
+        <span class="key" data-i18n="duration"></span>
+        <button class="pill" data-setting="duration" data-value="120" data-i18n="min2"></button>
+        <button class="pill" data-setting="duration" data-value="180" data-i18n="min3"></button>
+        <button class="pill" data-setting="duration" data-value="300" data-i18n="min5"></button>
+      </div>
+      <div class="row">
+        <span class="key" data-i18n="goalLimit"></span>
+        <button class="pill" data-setting="goalLimit" data-value="0" data-i18n="none"></button>
+        <button class="pill" data-setting="goalLimit" data-value="3">3</button>
+        <button class="pill" data-setting="goalLimit" data-value="5">5</button>
+        <button class="pill" data-setting="goalLimit" data-value="7">7</button>
+      </div>
+      <div class="row">
+        <span class="key" data-i18n="teammates"></span>
+        <button class="pill lv-easy" data-setting="mateLevel" data-value="easy" data-i18n="easy"></button>
+        <button class="pill lv-normal" data-setting="mateLevel" data-value="normal" data-i18n="normal"></button>
+        <button class="pill lv-hard" data-setting="mateLevel" data-value="hard" data-i18n="hard"></button>
+      </div>
+      <div class="row">
+        <span class="key" data-i18n="opponents"></span>
+        <button class="pill lv-easy" data-setting="oppLevel" data-value="easy" data-i18n="easy"></button>
+        <button class="pill lv-normal" data-setting="oppLevel" data-value="normal" data-i18n="normal"></button>
+        <button class="pill lv-hard" data-setting="oppLevel" data-value="hard" data-i18n="hard"></button>
+      </div>
+      <div class="row">
+        <span class="key" data-i18n="language"></span>
+        <button class="pill" data-lang="en">English</button>
+        <button class="pill" data-lang="tr">Türkçe</button>
+      </div>
+    </div>
+
+    <p class="hint" data-i18n="hint"></p>
+  </div>
+
+  <div id="pause" class="overlay hidden">
+    <div class="panel">
+      <h2 data-i18n="paused"></h2>
+      <button class="btn primary" data-action="resume" data-i18n="resume"></button>
+      <button class="btn" data-action="restart" data-i18n="restart"></button>
+      <button class="btn" data-action="menu" data-i18n="menu"></button>
+      <p class="tip" data-i18n="escResume"></p>
+    </div>
+  </div>
+
+  <div id="over" class="overlay hidden">
+    <div class="panel wide">
+      <h2 id="over-title" class="title"></h2>
+      <p id="over-sub" class="subtitle"></p>
+      <div id="over-score" class="bigscore"></div>
+      <div id="over-stats" class="stats"></div>
+      <div class="buttons">
+        <button class="btn primary" data-action="restart" data-i18n="playAgain"></button>
+        <button class="btn" data-action="menu" data-i18n="menu"></button>
+      </div>
+      <p class="tip" data-i18n="overTip"></p>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/sim.js"></script>
+  <script src="js/bots.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
