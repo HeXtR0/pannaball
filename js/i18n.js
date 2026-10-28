@@ -7,7 +7,9 @@ NB.I18N = {
   en: {
     teamOrange: 'ORANGE',
     teamPurple: 'PURPLE',
-    help: '<b>Mouse</b> move &nbsp;·&nbsp; <b>Left click</b> shoot &nbsp;·&nbsp; <b>Shift</b> boost &nbsp;·&nbsp; <b>Esc</b> pause',
+    help: '<b>WASD / Mouse</b> move &nbsp;·&nbsp; <b>Left click</b> shoot &nbsp;·&nbsp; <b>Shift</b> boost &nbsp;·&nbsp; <b>Esc</b> pause',
+    shoot: 'SHOOT',
+    boost: 'BOOST',
     chooseMode: 'Choose a mode',
     desc1v1: 'Small pitch · one on one',
     desc2v2: 'Medium pitch · keeper + striker',
@@ -49,7 +51,9 @@ NB.I18N = {
   tr: {
     teamOrange: 'TURUNCU',
     teamPurple: 'MOR',
-    help: '<b>Fare</b> hareket &nbsp;·&nbsp; <b>Sol tık</b> şut &nbsp;·&nbsp; <b>Shift</b> boost &nbsp;·&nbsp; <b>Esc</b> duraklat',
+    help: '<b>WASD / Fare</b> hareket &nbsp;·&nbsp; <b>Sol tık</b> şut &nbsp;·&nbsp; <b>Shift</b> boost &nbsp;·&nbsp; <b>Esc</b> duraklat',
+    shoot: 'ŞUT',
+    boost: 'BOOST',
     chooseMode: 'Mod seç',
     desc1v1: 'Küçük saha · birebir',
     desc2v2: 'Orta saha · kaleci + forvet',

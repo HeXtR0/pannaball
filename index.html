@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Pannaball</title>
   <meta name="description" content="Fast top-down arcade football in the browser. Play 1v1, 2v2 or 3v3 against bots.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -49,6 +49,24 @@
   <div id="toast"></div>
 
   <div id="help" class="hidden" data-i18n="help"></div>
+
+  <!-- Mobil Dokunmatik Kontroller (Sadece dokunmatik ekranlarda görünür) -->
+  <button id="touch-btn-pause" class="touch-pause-btn hidden" type="button" aria-label="Pause">⏸</button>
+  <div id="touch-controls" class="hidden">
+    <div id="joystick-zone">
+      <div id="joystick-base">
+        <div id="joystick-knob"></div>
+      </div>
+    </div>
+    <div id="touch-actions">
+      <button id="touch-btn-boost" class="touch-btn touch-btn-boost" type="button" aria-label="Boost">
+        <span class="touch-btn-label">BOOST</span>
+      </button>
+      <button id="touch-btn-shoot" class="touch-btn touch-btn-shoot" type="button" aria-label="Shoot">
+        <span class="touch-btn-label" data-i18n="shoot">SHOOT</span>
+      </button>
+    </div>
+  </div>
 
   <div id="menu">
     <h1 class="logo"><span class="o">PANNA</span><span class="p">BALL</span></h1>

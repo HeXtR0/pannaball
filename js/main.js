@@ -16,6 +16,7 @@
     clock: $('clock'), boostMeter: $('boost-meter'), boostFill: $('boost-fill'),
     pause: $('pause'), over: $('over'),
     scoreOrange: $('score-orange'), scorePurple: $('score-purple'),
+    touchControls: $('touch-controls'), touchPause: $('touch-btn-pause'),
   };
 
   let world = null;
@@ -122,6 +123,15 @@
     el.clock.classList.toggle('hidden', !inGame);
     el.boostMeter.classList.toggle('hidden', !inGame);
     el.help.classList.toggle('hidden', s !== 'play');
+    if (el.touchControls) el.touchControls.classList.toggle('hidden', s !== 'play');
+    if (el.touchPause) el.touchPause.classList.toggle('hidden', s !== 'play');
+  }
+
+  if (el.touchPause) {
+    el.touchPause.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (screen === 'play') setScreen('paused');
+    });
   }
 
   // --- Maç kurulumu -----------------------------------------------------
