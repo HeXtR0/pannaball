@@ -11,28 +11,31 @@ NB.Sim = (function () {
   // --- Duvarlar ---------------------------------------------------------
   // Her duvar bir çizgi parçası: [x1, y1, x2, y2]. Uçları yuvarlak davranır,
   // bu yüzden kale direkleri ayrıca tanımlanmaz, çizgi uçları direk görevi görür.
+  // Dikey format: Kaleler üstte (-h/2) ve altta (+h/2), yan çizgiler solda (-w/2) ve sağda (+w/2).
   function buildWalls(field) {
     const { w, h, goalW, goalDepth, outerMargin: m } = field;
-    const hw = w / 2, hh = h / 2, gy = goalW / 2, gd = goalDepth;
+    const hw = w / 2, hh = h / 2, gx = goalW / 2, gd = goalDepth;
 
     // Saha çizgileri: sadece top için (oyuncular dışarı taşabilir)
     const ballOnly = [
-      [-hw, -hh, hw, -hh],
-      [-hw, hh, hw, hh],
-      [-hw, -hh, -hw, -gy],
-      [-hw, gy, -hw, hh],
-      [hw, -hh, hw, -gy],
-      [hw, gy, hw, hh],
+      [-hw, -hh, -hw, hh],          // sol taç çizgisi
+      [hw, -hh, hw, hh],            // sağ taç çizgisi
+      [-hw, -hh, -gx, -hh],         // üst çizgi (kalenin solu)
+      [gx, -hh, hw, -hh],           // üst çizgi (kalenin sağı)
+      [-hw, hh, -gx, hh],           // alt çizgi (kalenin solu)
+      [gx, hh, hw, hh],             // alt çizgi (kalenin sağı)
     ];
 
     // Kale fileleri: hem top hem oyuncu için
     const nets = [
-      [-hw, -gy, -hw - gd, -gy],
-      [-hw - gd, -gy, -hw - gd, gy],
-      [-hw - gd, gy, -hw, gy],
-      [hw, -gy, hw + gd, -gy],
-      [hw + gd, -gy, hw + gd, gy],
-      [hw + gd, gy, hw, gy],
+      // Üst kale (mor kale)
+      [-gx, -hh, -gx, -hh - gd],
+      [-gx, -hh - gd, gx, -hh - gd],
+      [gx, -hh - gd, gx, -hh],
+      // Alt kale (turuncu kale)
+      [-gx, hh, -gx, hh + gd],
+      [-gx, hh + gd, gx, hh + gd],
+      [gx, hh + gd, gx, hh],
     ];
 
     // Dış sınır: sadece oyuncular için
@@ -53,7 +56,7 @@ NB.Sim = (function () {
     return {
       field,
       walls: buildWalls(field),
-      centerR: field.h * 0.15,  // orta yuvarlak yarıçapı (santra kuralı ve çizim)
+      centerR: field.w * 0.20,  // orta yuvarlak yarıçapı (santra kuralı ve çizim)
       tick: 0,
       players: [],
       ball: makeBody(0, 0, C.ball.radius, C.ball.mass),
@@ -103,7 +106,7 @@ NB.Sim = (function () {
       kickCd: 0,
       kickBuf: 0,
       kickFlash: 0,
-      aim: team === 'orange' ? 0 : Math.PI,
+      aim: team === 'orange' ? -Math.PI / 2 : Math.PI / 2,
     });
     world.players.push(p);
     resetPositions(world);
@@ -111,11 +114,12 @@ NB.Sim = (function () {
   }
 
   // Santra dizilişi (takım büyüklüğüne göre). Değerler saha boyutuna oranla.
-  // Turuncu soldan sağa, mor sağdan sola hücum eder (mor için x aynalanır).
+  // Dikey format: Turuncu altta (y > 0) başlar, yukarı hücum eder.
+  // Mor üstte (y < 0) başlar, aşağı hücum eder.
   const FORMATIONS = {
-    1: [[-0.2, 0]],
-    2: [[-0.15, 0], [-0.36, 0]],
-    3: [[-0.15, 0], [-0.3, -0.3], [-0.3, 0.3]],
+    1: [[0, 0.22]],
+    2: [[0, 0.16], [0, 0.38]],
+    3: [[0, 0.16], [-0.25, 0.34], [0.25, 0.34]],
   };
 
   function resetPositions(world) {
@@ -126,10 +130,11 @@ NB.Sim = (function () {
       const side = team === 'orange' ? 1 : -1;
       mates.forEach((p, i) => {
         const [sx, sy] = form[i % form.length];
-        p.x = p.px = sx * w * side;
-        p.y = p.py = sy * h;
+        p.x = p.px = sx * w;
+        p.y = p.py = sy * h * side;
         p.vx = p.vy = 0;
         p.kickBuf = p.kickCd = 0;
+        p.aim = team === 'orange' ? -Math.PI / 2 : Math.PI / 2;
       });
     }
     const b = world.ball;
@@ -153,6 +158,9 @@ NB.Sim = (function () {
 
     const n = C.SUBSTEPS;
     const ps = world.players;
+    const maxPx = world.field.w / 2 + world.field.outerMargin - C.player.radius;
+    const maxPy = world.field.h / 2 + world.field.outerMargin - C.player.radius;
+
     for (let s = 0; s < n; s++) {
       for (const o of all) { o.x += o.vx / n; o.y += o.vy / n; }
 
@@ -165,6 +173,12 @@ NB.Sim = (function () {
 
       for (const p of ps) for (const wl of world.walls.player) collideWall(p, wl, C.bounce.playerWall);
       for (const wl of world.walls.ball) collideWall(world.ball, wl, C.ball.wallBounce);
+
+      // Oyuncuların kesinlikle saha sınırları dışına çıkmaması için sert clamp
+      for (const p of ps) {
+        p.x = Math.max(-maxPx, Math.min(maxPx, p.x));
+        p.y = Math.max(-maxPy, Math.min(maxPy, p.y));
+      }
 
       if (world.kickoff.active) for (const p of ps) applyKickoffRule(world, p);
     }
@@ -185,27 +199,28 @@ NB.Sim = (function () {
     updateMatchState(world);
   }
 
-  // Santra: herkes kendi yarı sahasında kalır. Santrayı kullanmayan takım orta yuvarlağa da giremez.
+  // Santra: herkes kendi yarı sahasında kalır (dikey düzende y = 0 orta çizgi).
+  // Santrayı kullanmayan takım orta yuvarlağa da giremez.
   // Santrayı kullanan takım orta yuvarlağın içinde karşı yarıya geçebilir.
   function applyKickoffRule(world, p) {
-    const side = p.team === 'orange' ? -1 : 1;   // kendi yarı sahası: x * side >= 0
+    const side = p.team === 'orange' ? 1 : -1;   // kendi yarı sahası: y * side >= 0
     const R = world.centerR;
     const isKicker = p.team === world.kickoff.team;
 
-    if (p.x * side < 0) {
+    if (p.y * side < 0) {
       const d = Math.hypot(p.x, p.y);
       const inner = R - p.r;
       if (isKicker && d <= inner) {
         // yuvarlağın içinde, serbest
-      } else if (isKicker && d - inner < Math.abs(p.x)) {
+      } else if (isKicker && d - inner < Math.abs(p.y)) {
         // yuvarlağın sınırına geri it (çizgiye itmekten daha yakınsa)
         p.x *= inner / d; p.y *= inner / d;
         const nx = p.x / inner, ny = p.y / inner;
         const vn = p.vx * nx + p.vy * ny;
         if (vn > 0) { p.vx -= vn * nx; p.vy -= vn * ny; }
       } else {
-        p.x = 0;
-        if (p.vx * side < 0) p.vx = 0;
+        p.y = 0;
+        if (p.vy * side < 0) p.vy = 0;
       }
     }
 
@@ -213,7 +228,7 @@ NB.Sim = (function () {
       const min = R + p.r;
       const d = Math.hypot(p.x, p.y);
       if (d < min) {
-        const nx = d > 0 ? p.x / d : side, ny = d > 0 ? p.y / d : 0;
+        const nx = d > 0 ? p.x / d : 0, ny = d > 0 ? p.y / d : side;
         p.x = nx * min; p.y = ny * min;
         const vn = p.vx * nx + p.vy * ny;
         if (vn < 0) { p.vx -= vn * nx; p.vy -= vn * ny; }
@@ -236,7 +251,7 @@ NB.Sim = (function () {
     if (len > 1) { mx /= len; my /= len; }
     const moving = len > 0.01;
 
-    // Stamina ve sprint
+    // Stamina ve boost (Shift)
     p.sprinting = wantSprint && moving && !p.exhausted && p.stamina > 0;
     if (p.sprinting) {
       p.stamina = Math.max(0, p.stamina - C.stamina.drainPerSec * dt);
@@ -267,12 +282,13 @@ NB.Sim = (function () {
         world.lastTouch = p.id;
         world.events.push({ type: 'kick', id: p.id });
 
-        // Şut sayılır mı? Top rakip kalenin ağzına (biraz pay ile) doğru gidiyorsa evet.
-        const dir = p.team === 'orange' ? 1 : -1;
-        const gx = dir * world.field.w / 2;
-        if (b.vx * dir > 0) {
-          const y = b.y + b.vy * (gx - b.x) / b.vx;
-          if (Math.abs(y) < world.field.goalW / 2 + 30) {
+        // Şut sayılır mı? Top rakip kalenin ağzına doğru gidiyorsa evet.
+        // Turuncu yukarı hücum eder (dir = -1), mor aşağı hücum eder (dir = 1).
+        const dir = p.team === 'orange' ? -1 : 1;
+        const gy = dir * world.field.h / 2;
+        if (b.vy * dir > 0) {
+          const x = b.x + b.vx * (gy - b.y) / b.vy;
+          if (Math.abs(x) < world.field.goalW / 2 + 30) {
             world.stats.teams[p.team].shots++;
             playerStats(world, p.id).shots++;
           }
@@ -303,11 +319,11 @@ NB.Sim = (function () {
     else m.elapsed++;
 
     const b = world.ball;
-    const hw = world.field.w / 2, gy = world.field.goalW / 2;
-    if (Math.abs(b.y) < gy) {
+    const hh = world.field.h / 2, gx = world.field.goalW / 2;
+    if (Math.abs(b.x) < gx) {
       let scorer = null;
-      if (b.x < -hw - b.r) scorer = 'purple';      // sol kale turuncunun
-      else if (b.x > hw + b.r) scorer = 'orange';  // sağ kale morun
+      if (b.y < -hh - b.r) scorer = 'orange';      // üst kale morun kalesidir, turuncu attı
+      else if (b.y > hh + b.r) scorer = 'purple';  // alt kale turuncunun kalesidir, mor attı
       if (scorer) {
         world.score[scorer]++;
         world.state = 'goal';

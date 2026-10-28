@@ -1,6 +1,6 @@
-// Pannaball: yerel oyuncu kontrolcüsü (klavye + mouse).
-// Görevi sadece klavye/mouse durumunu simülasyonun anladığı "input"a çevirmek.
-// İleride bot ve ağ kontrolcüleri de aynı getInput(player) biçimini kullanacak.
+// Pannaball: yerel oyuncu kontrolcüsü (sadece fare + Shift boost).
+// WASD ve ok tuşları tamamen kaldırılmıştır.
+// Kontrol yöntemi: Mouse-follow (fareye doğru akıcı hareket, fare yakınsa yavaşlama, uzaksa tam hız).
 
 NB.LocalController = class {
   constructor(canvas, renderer) {
@@ -8,17 +8,20 @@ NB.LocalController = class {
     this.renderer = renderer;
     this.keys = new Set();
     this.mouse = { x: 0, y: 0, has: false };
+    this.lastTarget = { x: 0, y: 0 };
     this.kickQueued = false;
 
-    const block = new Set([
-      'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space',
-    ]);
-
+    // Sadece boost (Shift) tuşları dinlenir
     window.addEventListener('keydown', (e) => {
-      this.keys.add(e.code);
-      if (block.has(e.code)) e.preventDefault();
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+        this.keys.add(e.code);
+      }
     });
-    window.addEventListener('keyup', (e) => this.keys.delete(e.code));
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+        this.keys.delete(e.code);
+      }
+    });
     window.addEventListener('blur', () => this.keys.clear());
 
     canvas.addEventListener('mousemove', (e) => {
@@ -26,6 +29,12 @@ NB.LocalController = class {
       this.mouse.y = e.clientY;
       this.mouse.has = true;
     });
+
+    // Fare canvas dışına çıkarsa son geçerli konum korunur (crash/NaN önlenir)
+    canvas.addEventListener('mouseleave', () => {
+      // has durumu korunur, son geçerli lastTarget pozisyonu kullanılır
+    });
+
     canvas.addEventListener('mousedown', (e) => {
       if (e.button === 0) this.kickQueued = true;
     });
@@ -36,14 +45,47 @@ NB.LocalController = class {
     return codes.some((c) => this.keys.has(c));
   }
 
-  getInput(player) {
-    const moveX = (this.down('KeyD', 'ArrowRight') ? 1 : 0) - (this.down('KeyA', 'ArrowLeft') ? 1 : 0);
-    const moveY = (this.down('KeyS', 'ArrowDown') ? 1 : 0) - (this.down('KeyW', 'ArrowUp') ? 1 : 0);
+  getInput(player, world) {
+    // Saha sınırlarına clamp: oyuncu hedefi saha dışına çıkamaz
+    const f = world ? world.field : null;
+    const limitX = f ? f.w / 2 + f.outerMargin - player.r : 350;
+    const limitY = f ? f.h / 2 + f.outerMargin - player.r : 600;
 
-    let aim = player.aim;
+    // Farenin dünya koordinatlarını al ve geçerli mi doğrula
     if (this.mouse.has) {
       const m = this.renderer.screenToWorld(this.mouse.x, this.mouse.y);
-      aim = Math.atan2(m.y - player.y, m.x - player.x);
+      if (Number.isFinite(m.x) && Number.isFinite(m.y)) {
+        this.lastTarget.x = Math.max(-limitX, Math.min(limitX, m.x));
+        this.lastTarget.y = Math.max(-limitY, Math.min(limitY, m.y));
+      }
+    }
+
+    const tx = Math.max(-limitX, Math.min(limitX, this.lastTarget.x));
+    const ty = Math.max(-limitY, Math.min(limitY, this.lastTarget.y));
+
+    // Mouse-follow mantığı:
+    // Fareye olan mesafe vektörü hesaplanır.
+    // Oyuncu fareye çok yakınsa durur (ölü bölge titremeyi önler),
+    // yakınlaştıkça yumuşakça yavaşlar, uzaktaysa tam hızla ilerler.
+    const dx = tx - player.x;
+    const dy = ty - player.y;
+    const dist = Math.hypot(dx, dy);
+
+    let moveX = 0;
+    let moveY = 0;
+    let aim = player.aim;
+
+    if (dist > 2) {
+      aim = Math.atan2(dy, dx);
+    }
+
+    const deadzone = 6;     // ölü bölge (piksel)
+    const slowRadius = 65;   // yavaşlama eşiği (piksel)
+
+    if (dist > deadzone) {
+      const speed = Math.min(1, (dist - deadzone) / slowRadius);
+      moveX = (dx / dist) * speed;
+      moveY = (dy / dist) * speed;
     }
 
     const kick = this.kickQueued;

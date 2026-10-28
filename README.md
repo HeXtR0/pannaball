@@ -27,7 +27,7 @@ Play 1v1, 2v2 or 3v3 against bots, with your own bot teammates.
 - Bots take roles (chaser, keeper, support), pass, and pick open corners when shooting
 - Match length of 2, 3 or 5 minutes, with an optional goal limit
 - Golden goal overtime when the match ends in a draw
-- Sprint with a stamina bar
+- Boost with a stamina bar
 - Match stats at full time: scorers, shots and possession
 - English and Turkish language options
 
@@ -35,12 +35,19 @@ Play 1v1, 2v2 or 3v3 against bots, with your own bot teammates.
 
 | Key | Action |
 | --- | --- |
-| WASD / Arrow keys | Move |
+| Mouse | Move |
 | Left click | Shoot toward the mouse |
-| Shift | Sprint |
+| Shift | Boost (consumes stamina) |
 | Esc | Pause |
 | 1 / 2 / 3 | Start a mode from the menu |
 | Enter | Play again after a match |
+
+## Changelog
+
+### v2 — vertical + mouse control
+- **Vertical format (portrait)**: Pitch layout converted to portrait format (9:16 aspect ratio) with responsive scaling, goals positioned top and bottom, and rebalanced pitch physics.
+- **Mouse-only movement**: Completely removed WASD/Arrow keys in favor of fluid mouse-follow steering with smooth deceleration near cursor and strict pitch boundary clamping.
+- **Boost & stamina meter**: Shift sprint revamped into an agile 1.8x boost with integrated HUD stamina bar and on-player visual glow effects.
 
 ## Run locally
 

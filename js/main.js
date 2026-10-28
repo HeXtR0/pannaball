@@ -13,7 +13,8 @@
 
   const el = {
     menu: $('menu'), hud: $('hud'), help: $('help'), toast: $('toast'),
-    clock: $('clock'), pause: $('pause'), over: $('over'),
+    clock: $('clock'), boostMeter: $('boost-meter'), boostFill: $('boost-fill'),
+    pause: $('pause'), over: $('over'),
     scoreOrange: $('score-orange'), scorePurple: $('score-purple'),
   };
 
@@ -65,20 +66,21 @@
   NB.applyLang();
   refreshPills();
 
-  // --- Menü kartları ----------------------------------------------------
+  // --- Menü kartları (dikey saha minyatürleri) ----------------------------
   for (const card of document.querySelectorAll('.card')) {
     const n = NB.MODES[card.dataset.mode].size;
     const mini = card.querySelector('.mini');
-    // sim.js'deki santra dizilişiyle aynı
-    const rows = n === 1 ? [0.5] : n === 2 ? [0.5, 0.5] : [0.5, 0.22, 0.78];
-    const cols = n === 1 ? [0.3] : n === 2 ? [0.35, 0.16] : [0.35, 0.2, 0.2];
+    // sim.js'deki dikey santra dizilişiyle aynı
+    const rows = n === 1 ? [0.22] : n === 2 ? [0.16, 0.38] : [0.16, 0.34, 0.34];
+    const cols = n === 1 ? [0.5] : n === 2 ? [0.5, 0.5] : [0.5, 0.25, 0.75];
     for (let i = 0; i < n; i++) {
       for (const team of ['orange', 'purple']) {
         const dot = document.createElement('span');
         dot.className = 'dot ' + team;
-        const x = team === 'orange' ? cols[i] : 1 - cols[i];
+        const x = cols[i];
+        const y = team === 'orange' ? 0.5 + rows[i] : 0.5 - rows[i];
         dot.style.left = (x * 100) + '%';
-        dot.style.top = (rows[i] * 100) + '%';
+        dot.style.top = (y * 100) + '%';
         mini.appendChild(dot);
       }
     }
@@ -118,6 +120,7 @@
     const inGame = s !== 'menu';
     el.hud.classList.toggle('hidden', !inGame);
     el.clock.classList.toggle('hidden', !inGame);
+    el.boostMeter.classList.toggle('hidden', !inGame);
     el.help.classList.toggle('hidden', s !== 'play');
   }
 
@@ -146,7 +149,7 @@
 
     setScreen('play');
     const name = NB.t(myTeam === 'orange' ? 'teamOrange' : 'teamPurple');
-    const arrow = NB.t(myTeam === 'orange' ? 'attackRight' : 'attackLeft');
+    const arrow = NB.t(myTeam === 'orange' ? 'attackUp' : 'attackDown');
     showToast(myTeam, NB.t('yourTeam', { name, arrow }));
   }
 
@@ -191,6 +194,15 @@
       const left = Math.max(0, Math.ceil((m.durationTicks - m.elapsed) / TICK));
       el.clock.className = left <= 10 ? 'low' : '';
       el.clock.textContent = fmt(left);
+    }
+
+    // Boost & Stamina Barı
+    if (me && el.boostFill) {
+      const pct = Math.max(0, Math.min(100, Math.round(me.stamina * 100)));
+      el.boostFill.style.width = pct + '%';
+      el.boostMeter.classList.toggle('boosting', me.sprinting);
+      el.boostMeter.classList.toggle('exhausted', me.exhausted);
+      el.boostMeter.classList.toggle('low', !me.exhausted && me.stamina < 0.35);
     }
   }
 

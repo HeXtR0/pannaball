@@ -79,7 +79,7 @@ html, body {
 /* --- Takım bildirimi --------------------------------------------------- */
 #toast {
   position: fixed;
-  top: 92px;
+  top: 156px;
   left: 50%;
   transform: translate(-50%, -10px);
   padding: 10px 22px;
@@ -140,7 +140,7 @@ html, body {
 
 .card {
   position: relative;
-  width: 220px;
+  width: 200px;
   padding: 18px 18px 22px;
   border: 2px solid rgba(34, 230, 255, 0.5);
   border-radius: 18px;
@@ -160,7 +160,9 @@ html, body {
 
 .mini {
   position: relative;
-  height: 100px;
+  width: 90px;
+  height: 140px;
+  margin: 0 auto;
   border: 2px solid #22e6ff;
   border-radius: 6px;
   background: #0c1738;
@@ -168,13 +170,13 @@ html, body {
 }
 .mini .mid {
   position: absolute;
-  left: 50%; top: 0; bottom: 0;
-  border-left: 2px solid rgba(34, 230, 255, 0.7);
+  left: 0; right: 0; top: 50%;
+  border-top: 2px solid rgba(34, 230, 255, 0.7);
 }
 .mini .circle {
   position: absolute;
   left: 50%; top: 50%;
-  width: 26px; height: 26px;
+  width: 24px; height: 24px;
   transform: translate(-50%, -50%);
   border: 2px solid rgba(34, 230, 255, 0.7);
   border-radius: 50%;
@@ -248,7 +250,67 @@ html, body {
 #clock .ot { font-size: 12px; letter-spacing: 3px; margin-right: 6px; vertical-align: 2px; }
 @keyframes blink { to { opacity: 0.45; } }
 
-#toast { top: 122px; }
+/* --- Boost / Stamina Göstergesi ----------------------------------------- */
+#boost-meter {
+  position: fixed;
+  top: 118px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(10, 18, 48, 0.85);
+  border: 1.5px solid rgba(34, 230, 255, 0.4);
+  box-shadow: 0 0 10px rgba(34, 230, 255, 0.25);
+  pointer-events: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#boost-meter.boosting {
+  border-color: #22e6ff;
+  box-shadow: 0 0 16px rgba(34, 230, 255, 0.7);
+}
+#boost-meter.exhausted {
+  border-color: #ff3b3b;
+  box-shadow: 0 0 16px rgba(255, 59, 59, 0.7);
+}
+.boost-track {
+  width: 140px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(124, 255, 79, 0.15);
+  overflow: hidden;
+  position: relative;
+}
+#boost-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  background: #7cff4f;
+  box-shadow: 0 0 8px #7cff4f;
+  transition: width 0.08s linear, background 0.2s;
+}
+#boost-meter.boosting #boost-fill {
+  background: #22e6ff;
+  box-shadow: 0 0 12px #22e6ff;
+}
+#boost-meter.low #boost-fill {
+  background: #ffe14f;
+  box-shadow: 0 0 10px #ffe14f;
+}
+#boost-meter.exhausted #boost-fill {
+  background: #ff3b3b;
+  box-shadow: 0 0 10px #ff3b3b;
+}
+.boost-label {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #22e6ff;
+  text-shadow: 0 0 6px rgba(34, 230, 255, 0.8);
+}
+
 #toast.neutral { color: #ffe14f; box-shadow: 0 0 18px rgba(255, 225, 79, 0.45); }
 
 /* --- Menü ayarları (neon hap butonlar) --------------------------------- */

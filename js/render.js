@@ -22,11 +22,11 @@ NB.Renderer = class {
     this.dpr = dpr;
   }
 
-  // Sahayı ekrana sığdır (her modun saha boyutu farklı)
+  // Dikey sahayı ekrana sığdır (oranı koruyarak responsive ölçekleme)
   fit(f) {
     const W = window.innerWidth, H = window.innerHeight;
-    const viewW = f.w + 2 * (f.outerMargin + f.goalDepth) + 20;
-    const viewH = f.h + 2 * f.outerMargin + 30;
+    const viewW = f.w + 2 * f.outerMargin + 24;
+    const viewH = f.h + 2 * (f.outerMargin + f.goalDepth) + 24;
     const availH = H - this.hudHeight - 40; // altta yardım yazısı için pay
     this.scale = Math.min(W / viewW, availH / viewH);
     this.ox = W / 2;
@@ -54,7 +54,7 @@ NB.Renderer = class {
       this.dpr * this.ox, this.dpr * this.oy,
     );
 
-    const hw = f.w / 2, hh = f.h / 2, gy = f.goalW / 2, gd = f.goalDepth;
+    const hw = f.w / 2, hh = f.h / 2, gx = f.goalW / 2, gd = f.goalDepth;
     const m = f.outerMargin;
 
     // Oyuncuların çıkabildiği dış alan
@@ -70,13 +70,14 @@ NB.Renderer = class {
     ctx.strokeStyle = C.grid;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    for (let x = -hw + 50; x < hw; x += 50) { ctx.moveTo(x, -hh); ctx.lineTo(x, hh); }
-    for (let y = -hh + 40; y < hh; y += 40) { ctx.moveTo(-hw, y); ctx.lineTo(hw, y); }
+    for (let x = -hw + 45; x < hw; x += 45) { ctx.moveTo(x, -hh); ctx.lineTo(x, hh); }
+    for (let y = -hh + 45; y < hh; y += 45) { ctx.moveTo(-hw, y); ctx.lineTo(hw, y); }
     ctx.stroke();
 
     // Kale içleri (savunan takımın renginde hafif)
-    drawGoal(ctx, -hw, -1, gy, gd, C.orange);
-    drawGoal(ctx, hw, 1, gy, gd, C.purple);
+    // Üst kale: mor takımın savunduğu kale, alt kale: turuncu takımın savunduğu kale
+    drawGoal(ctx, -hh, -1, gx, gd, C.purple);
+    drawGoal(ctx, hh, 1, gx, gd, C.orange);
 
     // Saha çizgileri (neon)
     glow(ctx, C.line, 14, () => {
@@ -85,7 +86,7 @@ NB.Renderer = class {
       ctx.strokeRect(-hw, -hh, f.w, f.h);
     });
 
-    // Orta çizgi ve yuvarlak: santra sırasında santrayı kullanan takımın renginde parlar
+    // Orta çizgi (yatay) ve santra yuvarlağı: santra sırasında santrayı kullanan takımın renginde parlar
     const ko = world.kickoff.active && world.state === 'play';
     const midCol = ko ? (world.kickoff.team === 'orange' ? C.orange : C.purple) : C.line;
     if (ko) {
@@ -99,7 +100,7 @@ NB.Renderer = class {
       ctx.strokeStyle = midCol;
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(0, -hh); ctx.lineTo(0, hh);
+      ctx.moveTo(-hw, 0); ctx.lineTo(hw, 0);
       ctx.stroke();
       ctx.beginPath();
       ctx.arc(0, 0, world.centerR, 0, Math.PI * 2);
@@ -118,7 +119,7 @@ NB.Renderer = class {
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
       }
       ctx.fillStyle = C.post;
-      for (const sx of [-hw, hw]) for (const sy of [-gy, gy]) {
+      for (const sy of [-hh, hh]) for (const sx of [-gx, gx]) {
         ctx.beginPath(); ctx.arc(sx, sy, 6, 0, Math.PI * 2); ctx.fill();
       }
     });
@@ -160,19 +161,19 @@ NB.Renderer = class {
   }
 };
 
-function drawGoal(ctx, lineX, dir, gy, gd, color) {
+function drawGoal(ctx, lineY, dir, gx, gd, color) {
   ctx.save();
   ctx.fillStyle = color;
   ctx.globalAlpha = 0.12;
-  const x = dir < 0 ? lineX - gd : lineX;
-  ctx.fillRect(x, -gy, gd, gy * 2);
+  const y = dir < 0 ? lineY - gd : lineY;
+  ctx.fillRect(-gx, y, gx * 2, gd);
   // file deseni
   ctx.globalAlpha = 0.18;
   ctx.strokeStyle = color;
   ctx.lineWidth = 1;
   ctx.beginPath();
-  for (let yy = -gy + 12; yy < gy; yy += 12) { ctx.moveTo(x, yy); ctx.lineTo(x + gd, yy); }
-  for (let xx = x + 9; xx < x + gd; xx += 9) { ctx.moveTo(xx, -gy); ctx.lineTo(xx, gy); }
+  for (let xx = -gx + 12; xx < gx; xx += 12) { ctx.moveTo(xx, y); ctx.lineTo(xx, y + gd); }
+  for (let yy = y + 9; yy < y + gd; yy += 9) { ctx.moveTo(-gx, yy); ctx.lineTo(gx, yy); }
   ctx.stroke();
   ctx.restore();
 }
@@ -182,12 +183,25 @@ function drawPlayer(ctx, p, x, y, isLocal, isMate) {
   const fill = p.team === 'orange' ? C.orange : C.purple;
   const edge = p.team === 'orange' ? C.orangeDark : C.purpleDark;
 
+  // Boost aktifken arkasında / çevresinde parlak hız aurası
+  if (p.sprinting) {
+    ctx.save();
+    glow(ctx, '#22e6ff', 24, () => {
+      ctx.strokeStyle = '#22e6ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, p.r + 3.5, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
   // Nişan göstergesi (sadece senin oyuncunda)
   if (isLocal) {
     const ax = Math.cos(p.aim), ay = Math.sin(p.aim);
     ctx.save();
-    ctx.globalAlpha = 0.45;
-    ctx.strokeStyle = '#ffffff';
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = p.sprinting ? '#22e6ff' : '#ffffff';
     ctx.lineWidth = 2;
     ctx.setLineDash([4, 5]);
     ctx.beginPath();
@@ -197,7 +211,7 @@ function drawPlayer(ctx, p, x, y, isLocal, isMate) {
     ctx.restore();
   }
 
-  glow(ctx, fill, 16, () => {
+  glow(ctx, fill, p.sprinting ? 24 : 16, () => {
     ctx.fillStyle = fill;
     ctx.beginPath(); ctx.arc(x, y, p.r, 0, Math.PI * 2); ctx.fill();
   });
@@ -266,7 +280,7 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
   ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
 }

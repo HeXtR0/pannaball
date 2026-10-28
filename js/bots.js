@@ -8,10 +8,12 @@
 //    Sen topa en yakınsan "topa giden" sensin, botlar başka işe geçer.
 //    Kaleci rolü sadece botlara verilir (senin kalede durduğunu varsaymaz).
 //  - BotController: rolüne göre "ne yapmak istiyorum" (input) üretir.
-//    Klavye kontrolcüsüyle aynı biçimi döndürür, simülasyon farkı bilmez.
+//    Klavye/mouse kontrolcüsüyle aynı biçimi döndürür, simülasyon farkı bilmez.
 //
 // Doğallık için her botun bir "kişiliği" var (tepki süresi, nişan hatası, şut mesafesi,
 // pas sevgisi, sprint alışkanlığı...). Botlar topu anında değil, kısa bir gecikmeyle görür.
+//
+// Dikey format: Turuncu yukarı (-Y), Mor aşağı (+Y) hücum eder.
 
 NB.TeamBrain = class {
   constructor(world, humanIds = []) {
@@ -34,9 +36,10 @@ NB.TeamBrain = class {
     for (const team of ['orange', 'purple']) {
       const mates = w.players.filter((p) => p.team === team);
       if (!mates.length) continue;
-      const dir = team === 'orange' ? 1 : -1;
-      const ownGoal = { x: -dir * w.field.w / 2, y: 0 };
-      const ballNearGoal = dist(b, ownGoal) < w.field.w * 0.28;
+      // Dikey: Turuncu yukarı (-Y), Mor aşağı (+Y) hücum eder
+      const dir = team === 'orange' ? -1 : 1;
+      const ownGoal = { x: 0, y: -dir * w.field.h / 2 };
+      const ballNearGoal = dist(b, ownGoal) < w.field.h * 0.28;
 
       // Topa giden: mesafe + topun yanlış tarafındaysa ceza.
       // Mevcut chaser'a küçük avantaj (rol titremesin diye).
@@ -51,13 +54,13 @@ NB.TeamBrain = class {
       for (const p of mates) {
         if (!canChase(p)) continue;
         let s = dist(b, p);
-        if ((b.x - p.x) * dir < 0) s += 80;
+        if ((b.y - p.y) * dir < 0) s += 80;
         if (p.id === this.chaser[team]) s *= 0.8;
         if (mates.length > 1 && p.id === this.keeper[team] && !ballNearGoal) s += 10000;
         if (s < bestScore) { bestScore = s; best = p; }
       }
-      this.chaser[team] = best.id;
-      this.roles[best.id] = 'chaser';
+      this.chaser[team] = best ? best.id : null;
+      if (best) this.roles[best.id] = 'chaser';
 
       const rest = mates.filter((p) => p !== best && !this.humans.has(p.id));
       if (!rest.length) { this.keeper[team] = null; continue; }
@@ -68,8 +71,8 @@ NB.TeamBrain = class {
         if (p.id === this.keeper[team]) s *= 0.6;
         if (s < kScore) { kScore = s; keeper = p; }
       }
-      this.keeper[team] = keeper.id;
-      this.roles[keeper.id] = 'keeper';
+      this.keeper[team] = keeper ? keeper.id : null;
+      if (keeper) this.roles[keeper.id] = 'keeper';
       for (const p of rest) if (p !== keeper) this.roles[p.id] = 'support';
     }
   }
@@ -114,9 +117,10 @@ NB.BotController = class {
     const C = NB.CONFIG;
     const f = w.field, b = w.ball;
     const hw = f.w / 2, hh = f.h / 2;
-    const dir = p.team === 'orange' ? 1 : -1;
-    const ownGoal = { x: -dir * hw, y: 0 };
-    const oppGoal = { x: dir * hw, y: 0 };
+    // Dikey: Turuncu yukarı (-Y), Mor aşağı (+Y) hücum eder
+    const dir = p.team === 'orange' ? -1 : 1;
+    const ownGoal = { x: 0, y: -dir * hh };
+    const oppGoal = { x: 0, y: dir * hh };
     const R = p.r + b.r;
     const maxV = C.player.accel * C.player.damping / (1 - C.player.damping);
     const idle = { moveX: 0, moveY: 0, sprint: false, kick: false, aim: Math.atan2(b.y - p.y, b.x - p.x) };
@@ -150,7 +154,7 @@ NB.BotController = class {
     const oppDist = opp ? dist(opp, b) : Infinity;
     const pressured = oppDist < 75;
 
-    const shotTarget = { x: oppGoal.x, y: this.plan.shootY * f.goalW / 2 };
+    const shotTarget = { x: this.plan.shootX * f.goalW / 2, y: oppGoal.y };
     const shotDir = norm(shotTarget.x - b.x, shotTarget.y - b.y);
     const shotAim = () => Math.atan2(shotDir.y, shotDir.x);
 
@@ -161,7 +165,7 @@ NB.BotController = class {
       // Santra bizdeyse rakip topa dokunamaz: savunma moduna geçmeye gerek yok
       const ourKickoff = w.kickoff.active && w.kickoff.team === p.team;
       const oppD = opp && !ourKickoff ? dist(opp, sb) : Infinity;
-      const inOurHalf = (sb.x - ownGoal.x) * dir < f.w * 0.6;
+      const inOurHalf = (sb.y - ownGoal.y) * dir < f.h * 0.6;
 
       // Kendi yarımızda top çekişmeliyse topa kendi kalemiz tarafından gir ve kaleden uzağa it
       // (şut yolunu kapatır). Değilse rakip kaleye vurabileceğimiz taraftan gir.
@@ -174,7 +178,7 @@ NB.BotController = class {
       // ben topun önünde kaldıysam, körlemesine kovalama: topla kale arasına gir, şut açısını kapat.
       // Yeterince yaklaşınca (myDist küçük) normal müdahaleye döner.
       const oppWins = oppD + 25 < myDist;
-      const beaten = (p.x - sb.x) * dir > 10;
+      const beaten = (p.y - sb.y) * dir > 10;
       const defending = inOurHalf && (oppWins || beaten) && myDist > 50;
       if (defending) {
         const g = norm(ownGoal.x - sb.x, ownGoal.y - sb.y);
@@ -192,12 +196,12 @@ NB.BotController = class {
           target = avoidBall(p, { x: ownGoal.x + g.x * depth, y: ownGoal.y + g.y * depth }, sb, R);
         }
         // Kaleye şut geliyor ve ben topla kale arasındayım: topun yoluna kay
-        const incoming = sb.vx * -dir > 4 && (p.x - sb.x) * dir < 0;
+        const incoming = sb.vy * -dir > 4 && (p.y - sb.y) * dir < 0;
         const err = this.trackShot(incoming);
         if (incoming) {
-          const hitY = ballYAtX(sb, p.x);
-          if (hitY !== null && Math.abs(hitY) < f.goalW / 2 + 40) {
-            target = { x: p.x, y: hitY + err };
+          const hitX = ballXAtY(sb, p.y);
+          if (hitX !== null && Math.abs(hitX) < f.goalW / 2 + 40) {
+            target = { x: hitX + err, y: p.y };
             blocking = true;
           }
         }
@@ -213,7 +217,7 @@ NB.BotController = class {
         const dGoal = dist(b, oppGoal);
         if (facing > 0.45) {
           const pass = this.plan.pass ? findPass(w, p, b, dir) : null;
-          const inShotRange = dGoal < this.t.shootRange * f.w || (this.plan.longShot && dGoal < 0.7 * f.w);
+          const inShotRange = dGoal < this.t.shootRange * f.h || (this.plan.longShot && dGoal < 0.7 * f.h);
           // Akıllı şut: önü kapalı mı diye bak, en boş köşeyi seç. Her yer kapalıysa ve
           // baskı yoksa şut yerine pas ver ya da sürmeye devam et.
           const lane = inShotRange && this.plan.smart ? bestLane(w, p, b, oppGoal, f, toBall) : null;
@@ -229,7 +233,7 @@ NB.BotController = class {
         } else if (contested && toBall.x * uDef.x + toBall.y * uDef.y > 0.3) {
           // Çekişmede kaleden uzağa, biraz da ileri doğru uzaklaştır
           kick = true; aim = Math.atan2(uDef.y + shotDir.y, uDef.x + shotDir.x);
-        } else if (dist(b, ownGoal) < f.w * 0.3 && toBall.x * dir > -0.2 && pressured) {
+        } else if (dist(b, ownGoal) < f.h * 0.3 && toBall.y * dir > -0.2 && pressured) {
           // Kalemizin önünde, rakip yakın, düzgün vuramıyoruz: uzaklaştır
           kick = true; aim = Math.atan2(toBall.y, toBall.x);
         }
@@ -238,25 +242,25 @@ NB.BotController = class {
       const lim = f.goalW / 2;
       // Normalde: kale ortası ile top arasındaki çizgide, topa göre biraz önde dur
       let v = norm(sb.x - ownGoal.x, sb.y - ownGoal.y);
-      if (v.x * dir < 0.3) v = norm(dir * 0.3, Math.sign(v.y) || 1);
+      if (v.y * dir < 0.3) v = norm(Math.sign(v.x) || 1, dir * 0.3);
       const depth = clamp(dist(sb, ownGoal) * this.t.keeperDepth, 24, 110);
-      target = { x: ownGoal.x + v.x * depth, y: clamp(ownGoal.y + v.y * depth, -lim - 8, lim + 8) };
+      target = { x: clamp(ownGoal.x + v.x * depth, -lim - 8, lim + 8), y: ownGoal.y + v.y * depth };
 
       // Kaleye top geliyor: geri çekilme, bulunduğun hizada topun yoluna kay
-      const incoming = sb.vx * -dir > 2.5;
+      const incoming = sb.vy * -dir > 2.5;
       const err = this.trackShot(incoming);
       if (incoming) {
-        let kx = p.x;
-        const minX = ownGoal.x + dir * 16;
-        if ((kx - minX) * dir < 0) kx = minX;
-        const hitY = ballYAtX(sb, kx);
-        if (hitY !== null) {
-          target = { x: kx, y: clamp(hitY + err, -lim - 12, lim + 12) };
+        let ky = p.y;
+        const minY = ownGoal.y + dir * 16;
+        if ((ky - minY) * dir < 0) ky = minY;
+        const hitX = ballXAtY(sb, ky);
+        if (hitX !== null) {
+          target = { x: clamp(hitX + err, -lim - 12, lim + 12), y: ky };
           sprint = p.stamina > 0.15;
         }
       } else {
         // Top kale önünde başıboşsa git uzaklaştır
-        if (dist(sb, ownGoal) < f.w * 0.17) {
+        if (dist(sb, ownGoal) < f.h * 0.17) {
           const away = norm(sb.x - ownGoal.x, sb.y - ownGoal.y);
           target = approach(p, sb, away, R);
         }
@@ -267,14 +271,14 @@ NB.BotController = class {
         if (toBall.x * away.x + toBall.y * away.y > 0.1) {
           kick = true;
           // Uzaklaştırma: kaleden dışarı, biraz ileri doğru
-          const cx = away.x + dir * 0.8, cy = away.y;
+          const cx = away.x, cy = away.y + dir * 0.8;
           aim = Math.atan2(cy, cx);
         }
       }
     } else {
       // support: topun gerisinde, karşı kanatta, pas seçeneği gibi dur
-      const tx = clamp(sb.x - dir * 170 + this.plan.wanderX, -hw + 80, hw - 80);
-      const ty = (sb.y > 0 ? -hh * 0.4 : hh * 0.4) + this.plan.wanderY;
+      const ty = clamp(sb.y - dir * 170 + this.plan.wanderY, -hh + 80, hh - 80);
+      const tx = (sb.x > 0 ? -hw * 0.4 : hw * 0.4) + this.plan.wanderX;
       target = { x: tx, y: ty };
       if (this.t.spacing) target = spread(target, p, w, 130);
       if (inRange) {
@@ -318,15 +322,15 @@ NB.BotController = class {
   updatePlan(w, f) {
     if (this.plan && w.tick < this.planUntil) return;
     this.plan = {
-      shootY: pick([-0.55, -0.3, 0, 0.3, 0.55]) + rand(-0.1, 0.1),
+      shootX: pick([-0.55, -0.3, 0, 0.3, 0.55]) + rand(-0.1, 0.1),
       longShot: Math.random() < this.t.longShot,
       smart: Math.random() < this.t.smartShot,
       pass: Math.random() < this.t.passChance,
       sprinty: Math.random() < 0.5,
       markDist: rand(55, 95),
       lastManDepth: rand(0.3, 0.5),
-      wanderX: rand(-50, 50),
-      wanderY: rand(-40, 40),
+      wanderX: rand(-40, 40),
+      wanderY: rand(-50, 50),
     };
     this.planUntil = w.tick + Math.round(rand(60, 150));
   }
@@ -360,14 +364,14 @@ function intercept(p, s, maxV, R, f) {
   return { x, y };
 }
 
-// Top, x hizasına geldiğinde y'si ne olur? (gelmiyorsa null)
-function ballYAtX(s, x) {
+// Top, y hizasına geldiğinde x'i ne olur? (gelmiyorsa null)
+function ballXAtY(s, y) {
   const d = NB.CONFIG.ball.damping;
   let bx = s.x, by = s.y, vx = s.vx, vy = s.vy;
   for (let t = 0; t < 120; t++) {
-    if ((x - bx) * Math.sign(vx) <= 0) return by;
+    if ((y - by) * Math.sign(vy) <= 0) return bx;
     bx += vx; by += vy; vx *= d; vy *= d;
-    if (Math.abs(vx) < 0.3) return null;
+    if (Math.abs(vy) < 0.3) return null;
   }
   return null;
 }
@@ -402,7 +406,7 @@ function avoidBall(p, target, ball, R) {
 function bestLane(w, p, b, oppGoal, f, toBall) {
   let best = null;
   for (const k of [-0.7, -0.4, 0, 0.4, 0.7]) {
-    const t = { x: oppGoal.x, y: k * f.goalW / 2 };
+    const t = { x: k * f.goalW / 2, y: oppGoal.y };
     const d = norm(t.x - b.x, t.y - b.y);
     if (toBall.x * d.x + toBall.y * d.y < 0.45) continue;
     let clear = Infinity;
@@ -456,7 +460,7 @@ function findPass(w, p, b, dir) {
   let best = null, bestScore = 0;
   for (const m of w.players) {
     if (m === p || m.team !== p.team) continue;
-    const ahead = (m.x - b.x) * dir;
+    const ahead = (m.y - b.y) * dir;
     if (ahead < 50) continue;
     const lead = { x: m.x + m.vx * 12, y: m.y + m.vy * 12 };
     let open = true;

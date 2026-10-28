@@ -9,8 +9,8 @@ NB.CONFIG = {
   player: {
     radius: 14,
     mass: 1,
-    accel: 0.28,        // normal ivme (her adımda)
-    sprintAccel: 0.42,  // Shift basılıyken ivme
+    accel: 0.30,        // normal ivme (dikey saha ölçeğine göre dengelendi)
+    sprintAccel: 0.54,  // Shift boost basılıyken ivme (~1.8x çarpan)
     damping: 0.94,      // her adımda hızın ne kadarı kalır
   },
 
@@ -28,27 +28,27 @@ NB.CONFIG = {
   },
 
   kick: {
-    power: 13,          // şut sonrası topun hızı
-    range: 6,           // oyuncu ile top kenarları arası bu mesafedeyse vurabilir
+    power: 14,          // şut sonrası topun hızı (dikey saha uzunluğuna uygun)
+    range: 7,           // oyuncu ile top kenarları arası bu mesafedeyse vurabilir
     cooldownTicks: 12,  // iki şut arası bekleme
     bufferTicks: 6,     // tık biraz erken gelirse kısa süre bekletilir
   },
 
   stamina: {
-    drainPerSec: 0.5,     // dolu stamina 2 saniyelik sprint
-    regenPerSec: 0.22,    // sprint yokken dolum hızı
-    recoverAt: 0.25,      // tamamen biterse bu seviyeye dolana kadar sprint yok
+    drainPerSec: 0.40,    // dolu stamina ile ~2.5 saniyelik boost
+    regenPerSec: 0.20,    // boost yokken dolum hızı (~5 saniyede tam dolum)
+    recoverAt: 0.25,      // tamamen biterse bu seviyeye dolana kadar boost kilitli
   },
 
   goalPauseTicks: 100,  // golden sonra santraya kadar bekleme
 };
 
-// Modlar: her modun kendi saha boyutu var, kalabalık arttıkça saha büyür.
+// Modlar: dikey format (9:16 en-boy oranına uygun dikey saha boyutları).
 // outerMargin: oyuncular saha çizgisinin bu kadar dışına çıkabilir (top çıkamaz).
 NB.MODES = {
-  '1v1': { size: 1, field: { w: 1100, h: 500, goalW: 120, goalDepth: 45, outerMargin: 50 } },
-  '2v2': { size: 2, field: { w: 1300, h: 600, goalW: 160, goalDepth: 45, outerMargin: 55 } },
-  '3v3': { size: 3, field: { w: 1550, h: 720, goalW: 180, goalDepth: 50, outerMargin: 60 } },
+  '1v1': { size: 1, field: { w: 540, h: 960, goalW: 130, goalDepth: 45, outerMargin: 50 } },
+  '2v2': { size: 2, field: { w: 630, h: 1120, goalW: 160, goalDepth: 45, outerMargin: 55 } },
+  '3v3': { size: 3, field: { w: 720, h: 1280, goalW: 180, goalDepth: 50, outerMargin: 60 } },
 };
 
 // Bot zorluk seviyeleri. [a, b] olan değerler her bot için bu aralıktan rastgele seçilir
@@ -56,7 +56,7 @@ NB.MODES = {
 //  reaction     : başkası vurunca topun yeni yönünü fark etme süresi (adım, 60 adım = 1 sn)
 //  thinkEvery   : topun yerini kaç adımda bir günceller
 //  aimNoise     : şut sapması (radyan)
-//  shootRange   : rakip kaleye bu kadar yakınsa şut çeker (saha genişliğine oran)
+//  shootRange   : rakip kaleye bu kadar yakınsa şut çeker (saha uzunluğuna oran)
 //  longShot     : uzaktan şut deneme ihtimali
 //  passChance   : uygun arkadaş varsa pas verme ihtimali
 //  sprintMin    : stamina bunun altındaysa sprint atmaz
