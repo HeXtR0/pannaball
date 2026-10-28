@@ -236,13 +236,16 @@ function drawPlayer(ctx, p, x, y, isLocal, isMate) {
   ctx.textBaseline = 'middle';
   ctx.fillText(String(p.number), x, y + 1);
 
-  // Stamina halkası: sende kalın ve parlak, takım arkadaşlarında ince ve soluk.
-  // Rakiplerde gösterilmez.
-  if (isLocal) drawStaminaRing(ctx, p, x, y, { R: p.r + 6, width: 3, alpha: 1, glowBlur: 10 });
-  else if (isMate) drawStaminaRing(ctx, p, x, y, { R: p.r + 5, width: 1.5, alpha: 0.5, glowBlur: 0 });
+  // Stamina halkası: sende kalın ve parlak, botlarda tutarlı ve sabit opaklıkta.
+  // Botların stamina bar'ı stamina değişse bile her karede sabit konum ve opaklıkta görünür kalır.
+  if (isLocal) {
+    drawStaminaRing(ctx, p, x, y, { R: p.r + 6, width: 3, alpha: 1, glowBlur: 10, isBot: false });
+  } else {
+    drawStaminaRing(ctx, p, x, y, { R: p.r + 5, width: 2, alpha: 0.65, glowBlur: 0, isBot: true });
+  }
 }
 
-function drawStaminaRing(ctx, p, x, y, { R, width, alpha, glowBlur }) {
+function drawStaminaRing(ctx, p, x, y, { R, width, alpha, glowBlur, isBot = false }) {
   const C = NB.COLORS;
   ctx.save();
   ctx.lineWidth = width;
@@ -254,13 +257,18 @@ function drawStaminaRing(ctx, p, x, y, { R, width, alpha, glowBlur }) {
   let col = C.stamina;
   if (p.exhausted) col = C.staminaLow;
   else if (p.stamina < 0.35) col = C.staminaMid;
-  if (p.exhausted) ctx.globalAlpha = alpha * (0.55 + 0.45 * Math.sin(performance.now() / 90));
 
-  if (p.stamina > 0.001) {
+  // Sadece yerel oyuncu tükendiğinde yanıp sönebilir; botlar için opaklık tutarlı kalır
+  if (p.exhausted && !isBot) {
+    ctx.globalAlpha = alpha * (0.55 + 0.45 * Math.sin(performance.now() / 90));
+  }
+
+  const val = Math.max(0, Math.min(1, typeof p.stamina === 'number' ? p.stamina : 1));
+  if (val > 0.001) {
     glow(ctx, col, glowBlur, () => {
       ctx.strokeStyle = col;
       ctx.beginPath();
-      ctx.arc(x, y, R, -Math.PI / 2, -Math.PI / 2 + p.stamina * Math.PI * 2);
+      ctx.arc(x, y, R, -Math.PI / 2, -Math.PI / 2 + val * Math.PI * 2);
       ctx.stroke();
     });
   }

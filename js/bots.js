@@ -111,6 +111,7 @@ NB.BotController = class {
     this.kickoffDelay = 0;
     this.shotTracked = false;
     this.keeperErr = 0;
+    this.sprinting = false;
   }
 
   getInput(p, w) {
@@ -124,10 +125,11 @@ NB.BotController = class {
     const R = p.r + b.r;
     const maxV = C.player.accel * C.player.damping / (1 - C.player.damping);
     const idle = { moveX: 0, moveY: 0, sprint: false, kick: false, aim: Math.atan2(b.y - p.y, b.x - p.x) };
+    const returnIdle = () => { this.sprinting = false; return idle; };
 
-    if (w.state !== 'play') return idle;
+    if (w.state !== 'play') return returnIdle();
     // Santra rakipteyse topa dokunulana kadar yerinde bekle
-    if (w.kickoff.active && w.kickoff.team !== p.team) return idle;
+    if (w.kickoff.active && w.kickoff.team !== p.team) return returnIdle();
 
     // Santra: her bot rastgele kısa bir süre bekler, ilk saniyelerde sprint yok
     if (w.kickoffTick !== this.kickoffSeen) {
@@ -137,7 +139,7 @@ NB.BotController = class {
       this.seen = null;
     }
     const sinceKickoff = w.tick - w.kickoffTick;
-    if (sinceKickoff < this.kickoffDelay) return idle;
+    if (sinceKickoff < this.kickoffDelay) return returnIdle();
     const calmStart = sinceKickoff < 100;
 
     const sb = this.perceive(p, w);   // botun "gördüğü" top (gecikmeli)
@@ -208,9 +210,22 @@ NB.BotController = class {
       }
 
       const racing = opp && oppD < myDist * 1.15 && myDist > 70;
-      sprint = !calmStart && p.stamina > this.t.sprintMin &&
+      const wantSprint = !calmStart &&
         (racing || (defending && beaten) || (this.plan.sprinty && myDist > 220));
-      if (blocking) sprint = p.stamina > 0.15;
+
+      if (blocking) {
+        sprint = p.stamina > 0.12 && !p.exhausted;
+      } else if (wantSprint) {
+        // Hysteresis: sprint başlatmak için sprintMin eşiği, devam ettirmek için daha düşük eşik.
+        // Böylece stamina sınırda dalgalanıp bar yanıp sönmez (flickering önlenir).
+        if (this.sprinting) {
+          sprint = p.stamina > 0.12 && !p.exhausted;
+        } else {
+          sprint = p.stamina >= this.t.sprintMin && !p.exhausted;
+        }
+      } else {
+        sprint = false;
+      }
 
       if (inRange) {
         const facing = toBall.x * shotDir.x + toBall.y * shotDir.y;
@@ -256,7 +271,7 @@ NB.BotController = class {
         const hitX = ballXAtY(sb, ky);
         if (hitX !== null) {
           target = { x: clamp(hitX + err, -lim - 12, lim + 12), y: ky };
-          sprint = p.stamina > 0.15;
+          sprint = p.stamina > 0.12 && !p.exhausted;
         }
       } else {
         // Top kale önünde başıboşsa git uzaklaştır
@@ -289,6 +304,7 @@ NB.BotController = class {
 
     if (kick) aim += (Math.random() - 0.5) * 2 * this.t.aimNoise;
 
+    this.sprinting = !!sprint;
     const mv = sidestepMates(p, w, steer(p, target, sprint ? maxV * 1.5 : maxV));
     return { moveX: mv.x * this.t.speed, moveY: mv.y * this.t.speed, sprint, kick, aim };
   }
