@@ -1,4 +1,4 @@
-// Ballgame: dil desteği (İngilizce varsayılan, Türkçe seçenek).
+// Pannaball: dil desteği (İngilizce varsayılan, Türkçe seçenek).
 // HTML'de data-i18n="anahtar" olan her öğenin içi seçili dile göre doldurulur.
 // JS içinde NB.t('anahtar', { degisken: deger }) ile çeviri alınır.
 window.NB = window.NB || {};
@@ -87,7 +87,7 @@ NB.I18N = {
 };
 
 (function () {
-  const KEY = 'ballgame.lang';
+  const KEY = 'pannaball.lang';
   let lang = 'en';
   try {
     const saved = localStorage.getItem(KEY);

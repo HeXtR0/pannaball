@@ -1,4 +1,4 @@
-// Ballgame: simülasyon.
+// Pannaball: simülasyon.
 // Fizik, şut, stamina, gol ve skor burada. Ekranla ya da klavyeyle ilgisi yok:
 // her adımda sadece "her oyuncu ne yapmak istiyor" bilgisini (input) alır.
 // Böylece aynı kod botlarla, yerelde ve ileride sunucuda çalışabilir.

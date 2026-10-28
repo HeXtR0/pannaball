@@ -1,4 +1,4 @@
-// Ballgame: menü, maç akışı ve oyun döngüsü.
+// Pannaball: menü, maç akışı ve oyun döngüsü.
 // Fizik sabit hızda (saniyede 60 adım) döner, çizim ekranın yenileme hızında yapılır.
 //
 // Ekranlar: 'menu' -> 'play' <-> 'paused' -> 'over' -> ('play' | 'menu')
@@ -28,7 +28,7 @@
   const settings = { duration: 180, goalLimit: 0, mateLevel: 'normal', oppLevel: 'normal' };
   const LEVELS = Object.keys(NB.DIFFICULTY);
   try {
-    const saved = JSON.parse(localStorage.getItem('ballgame.settings') || '{}');
+    const saved = JSON.parse(localStorage.getItem('pannaball.settings') || '{}');
     if ([120, 180, 300].includes(saved.duration)) settings.duration = saved.duration;
     if ([0, 3, 5, 7].includes(saved.goalLimit)) settings.goalLimit = saved.goalLimit;
     if (LEVELS.includes(saved.mateLevel)) settings.mateLevel = saved.mateLevel;
@@ -58,7 +58,7 @@
   for (const pill of document.querySelectorAll('.pill[data-setting]')) {
     pill.addEventListener('click', () => {
       settings[pill.dataset.setting] = pillValue(pill);
-      try { localStorage.setItem('ballgame.settings', JSON.stringify(settings)); } catch (e) { /* önemli değil */ }
+      try { localStorage.setItem('pannaball.settings', JSON.stringify(settings)); } catch (e) { /* önemli değil */ }
       refreshPills();
     });
   }

@@ -1,4 +1,4 @@
-// Ballgame: botlar.
+// Pannaball: botlar.
 //
 // İki parça var:
 //  - TeamBrain: her adımda takımdaki botlara rol verir.

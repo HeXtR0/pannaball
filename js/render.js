@@ -1,4 +1,4 @@
-// Ballgame: çizim. Dünyayı okur, hiçbir şeyi değiştirmez.
+// Pannaball: çizim. Dünyayı okur, hiçbir şeyi değiştirmez.
 
 NB.Renderer = class {
   constructor(canvas) {

@@ -1,4 +1,4 @@
-// Ballgame: oyun ayarları ve renkler.
+// Pannaball: oyun ayarları ve renkler.
 // Hissi değiştirmek için çoğu zaman sadece buradaki sayılarla oynamak yeterli.
 window.NB = window.NB || {};
 

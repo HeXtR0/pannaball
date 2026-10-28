@@ -1,0 +1,9 @@
+# Development notes, not part of the game
+work_done/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

@@ -1,4 +1,4 @@
-// Ballgame: yerel oyuncu kontrolcüsü (klavye + mouse).
+// Pannaball: yerel oyuncu kontrolcüsü (klavye + mouse).
 // Görevi sadece klavye/mouse durumunu simülasyonun anladığı "input"a çevirmek.
 // İleride bot ve ağ kontrolcüleri de aynı getInput(player) biçimini kullanacak.
 
