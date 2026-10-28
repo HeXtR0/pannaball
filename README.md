@@ -27,22 +27,40 @@ Play 1v1, 2v2 or 3v3 against bots, with your own bot teammates.
 - Bots take roles (chaser, keeper, support), pass, and pick open corners when shooting
 - Match length of 2, 3 or 5 minutes, with an optional goal limit
 - Golden goal overtime when the match ends in a draw
-- Boost with a stamina bar
+- Boost with a stamina bar (steady and flicker-free for all bots and players)
+- Full mobile phone & touch support with virtual joystick and action buttons
 - Match stats at full time: scorers, shots and possession
 - English and Turkish language options
 
 ## Controls
 
-| Key | Action |
+### Desktop
+| Key / Input | Action |
 | --- | --- |
-| Mouse | Move |
+| WASD / Arrow keys / Mouse | Move (keyboard or fluid mouse-follow) |
 | Left click | Shoot toward the mouse |
 | Shift | Boost (consumes stamina) |
 | Esc | Pause |
 | 1 / 2 / 3 | Start a mode from the menu |
 | Enter | Play again after a match |
 
+### Mobile (Touch)
+| Touch Control | Action |
+| --- | --- |
+| Virtual Joystick (Left) | 360° Movement & aiming |
+| Shoot Button (Right) | Shoot toward current movement / aim |
+| Boost Button (Right) | Boost sprint (consumes stamina) |
+| Pause Button (Top-Right) | Pause match |
+
+> **Note on Bot Stamina**: Bot stamina bars are rendered continuously with steady opacity and position, completely resolving any previous flickering or threshold oscillations during bot boost sprints.
+
 ## Changelog
+
+### v2.1 — mobile support & stamina flickering fix
+- **Mobile phone support**: Added dedicated touch controls including an intuitive virtual joystick on the left for fluid 360° movement and aiming, responsive Shoot and Boost action buttons on the right, and an on-screen pause button. Touch controls automatically show on touch-enabled devices and stay hidden on desktop.
+- **Responsive mobile viewport**: Enhanced scaling, safe-area padding, and strict `touch-action: none` rules to prevent unwanted gestures, zooming, or page scrolling on mobile browsers.
+- **Bot stamina flickering fixed**: Added sprint hysteresis to bot decision logic and stabilized stamina ring rendering for all bots (teammates and opponents), eliminating rapid on/off flickering.
+- **Restored keyboard controls**: Reintroduced WASD and Arrow keys alongside mouse-follow so players can choose keyboard, mouse, or hybrid controls.
 
 ### v2 — vertical + mouse control
 - **Vertical format (portrait)**: Pitch layout converted to portrait format (9:16 aspect ratio) with responsive scaling, goals positioned top and bottom, and rebalanced pitch physics.
